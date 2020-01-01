@@ -1,19 +1,16 @@
-﻿// A fake socket for bot players
-
-function FakeSocket(gameServer) {
-    this.server = gameServer;
-    this.isCloseRequest = false;
+class FakeSocket {
+    constructor(server) {
+        this.server = server;
+        this.isCloseRequest = false;
+        this.isConnected = true;
+    }
+    sendPacket(packet) {
+        return;
+    }
+    close() {
+        this.isCloseRequest = true;
+        this.isConnected = false;
+    }
 }
 
 module.exports = FakeSocket;
-
-// Override
-
-FakeSocket.prototype.sendPacket = function (packet) {
-    // Fakes sending a packet
-    return;
-};
-
-FakeSocket.prototype.close = function (error) {
-    this.isCloseRequest = true;
-};

@@ -1,86 +1,25 @@
-﻿// Imports
-var Logger = require('./modules/Logger');
-var Commands = require('./modules/CommandList');
-var GameServer = require('./GameServer');
+// External modules.
+const ReadLine = require("readline");
 
-// Init variables
-var showConsole = true;
+// Project modules.
+const Commands = require("./modules/CommandList.js");
+const Server = require("./Server.js");
+const Logger = require("./modules/Logger.js");
 
-// Start msg
-Logger.start();
+// Create console interface.
+const inputInterface = ReadLine.createInterface(process.stdin, process.stdout);
 
-process.on('exit', function (code) {
-    Logger.debug("process.exit(" + code + ")");
-    Logger.shutdown();
+// Create and start instance of server.
+const instance = new Server();
+instance.start();
+
+// Welcome message.
+Logger.info(`Running MultiOgarII ${instance.version}, a FOSS agar.io server implementation.`);
+
+// Catch console input.
+inputInterface.on("line", (input) => {
+    const args = input.toLowerCase().split(" ");
+    if(Commands[args[0]]) {
+        Commands[args[0]](instance, args)
+    };
 });
-
-process.on('uncaughtException', function (err) {
-    Logger.fatal(err.stack);
-    process.exit(1);
-});
-
-// Handle arguments
-process.argv.forEach(function (val) {
-    if (val == "--noconsole") {
-        showConsole = false;
-    } else if (val == "--help") {
-        console.log("Proper Usage: node index.js");
-        console.log("    --noconsole         Disables the console");
-        console.log("    --help              Help menu.");
-        console.log("");
-    }
-});
-
-// Run Ogar
-var gameServer = new GameServer();
-Logger.info("\u001B[1m\u001B[32mMultiOgar-Edited " + gameServer.version + "\u001B[37m - An open source multi-protocol ogar server\u001B[0m");
-gameServer.start();
-
-// Add command handler
-gameServer.commands = Commands.list;
-// Initialize the server console
-if (showConsole) {
-    var readline = require('readline');
-    var in_ = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout
-    });
-    setTimeout(prompt, 100);
-}
-
-// Console functions
-
-function prompt() {
-    in_.question(">", function (str) {
-        try {
-            parseCommands(str);
-        } catch (err) {
-            Logger.error(err.stack);
-        } finally {
-            setTimeout(prompt, 0);
-        }
-    });
-}
-
-function parseCommands(str) {
-    // Log the string
-    Logger.write(">" + str);
-    
-    // Don't process ENTER
-    if (str === '')
-        return;
-    
-    // Splits the string
-    var split = str.split(" ");
-    
-    // Process the first string value
-    var first = split[0].toLowerCase();
-    
-    // Get command function
-    var execute = gameServer.commands[first];
-    if (typeof execute != 'undefined') {
-        execute(gameServer, split);
-    } else {
-        Logger.warn("Invalid Command!");
-    }
-}

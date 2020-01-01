@@ -1,143 +1,109 @@
-var PlayerTracker = require('../PlayerTracker');
-var Vector = require('vector2-node');
+const PlayerTracker = require('../PlayerTracker');
+const Vec2 = require('../modules/Vec2');
 
-function BotPlayer() {
-    PlayerTracker.apply(this, Array.prototype.slice.call(arguments));
-    this.splitCooldown = 0;
+const decideTypes = [
+    function decidePlayer(node, cell) {
+        // Same team, don't eat
+        if (this.server.mode.haveTeams && cell.owner.team == node.owner.team)
+            return 0;
+        if (cell._size > node._size * 1.15) // Edible
+            return node._size * 2.5;
+        if (node._size > cell._size * 1.15) // Bigger, avoid
+            return -node._size;
+        return -(node._size / cell._size) / 3;
+    },
+    function decideFood(node, cell) { // Always edible
+        return 1;
+    },
+    function decideEjected(node, cell) {
+        if (cell._size > node._size * 1.15)
+            return node._size;
+        return 0;
+    },
+    function decideVirus(node, cell) {
+        if (cell._size > node._size * 1.15) { // Edible
+            if (this.cells.length == this.server.config.playerMaxCells) {
+                // Reached cell limit, won't explode
+                return node._size * 2.5;
+            }
+            // Will explode, avoid
+            return -1;
+        }
+        if (node.isMotherCell && node._size > cell._size * 1.15) // Avoid mother cell if bigger than player
+            return -1;
+        return 0;
+    }
+];
+
+class BotPlayer extends PlayerTracker {
+    constructor(server, socket) {
+        super(server, socket);
+        this.isBot = true;
+        this.influence = 0;
+    }
+    largest(list) {
+        return list.reduce((largest, current) => {
+            return current._size > largest._size ? current : largest;
+        });
+    }
+    checkConnection() {
+        // Respawn if bot is dead
+        if (!this.cells.length)
+            this.server.mode.onPlayerSpawn(this.server, this);
+    }
+    sendUpdate() {
+        this.decide(this.largest(this.cells));
+    }
+    decide(cell) {
+        if (!cell)
+            return;
+
+        const result = new Vec2(0, 0);
+
+        for (const node of this.viewNodes) {
+            if (node.owner == this)
+                continue;
+
+            // Make decisions
+            this.influence = decideTypes[node.type].call(this, node, cell);
+
+            // Conclude decisions
+            // Apply this.influence if it isn't 0
+            if (this.influence == 0)
+                continue;
+
+            // Calculate separation between cell and node
+            const displacement = node.position.difference(cell.position);
+
+            // Figure out distance between cells
+            let distance = displacement.dist();
+
+            if (this.influence < 0) // Get edge distance
+                distance -= cell._size + node._size;
+
+            // The farther they are the smaller influence it is
+            if (distance < 1)
+                distance = 1;
+
+            this.influence /= distance;
+
+            // Splitting conditions
+            if (node.type != 1 && cell._size > node._size * 1.15 &&
+                !this.splitCooldown && this.cells.length < 8 &&
+                400 - cell._size / 2 - node._size >= distance) {
+                // Splitkill the target
+                this.splitCooldown = 15;
+                this.mouse.assign(node.position);
+                this.socket.packetHandler.pressSpace = true;
+                return;
+            } else {
+                // Produce force vector exerted by this entity on the cell
+                result.add(displacement.normalize().product(this.influence));
+            }
+        }
+
+        // Set bot's mouse position
+        this.mouse.assign(cell.position.sum(result.multiply(900)));
+    }
 }
 module.exports = BotPlayer;
-BotPlayer.prototype = new PlayerTracker();
-
-
-BotPlayer.prototype.largest = function (list) {
-    if (!list.length) return null; // Error!
-
-    // Sort the cells by Array.sort() function to avoid errors
-    var sorted = list.valueOf();
-    sorted.sort(function (a, b) {
-        return b._size - a._size;
-    });
-    return sorted[0];
-};
-
-BotPlayer.prototype.checkConnection = function () {
-    if (this.socket.isCloseRequest) {
-        while (this.cells.length) {
-            this.gameServer.removeNode(this.cells[0]);
-        }
-        this.isRemoved = true;
-        return;
-    }
-    // Respawn if bot is dead
-    if (!this.cells.length) {
-        this.gameServer.gameMode.onPlayerSpawn(this.gameServer, this);
-        if (!this.cells.length) {
-            // If the bot cannot spawn any cells, then disconnect it
-            this.socket.close();
-        }
-    }
-};
-
-BotPlayer.prototype.sendUpdate = function () { // Overrides the update function from player tracker
-    if (this.splitCooldown) this.splitCooldown--;
-    this.decide(this.largest(this.cells)); // Action
-};
-
-// Custom
-BotPlayer.prototype.decide = function (cell) {
-    if (!cell) return; // Cell was eaten, check in the next tick (I'm too lazy)
-    var result = new Vector(0, 0); // For splitting
-    
-    for (var i = 0; i < this.viewNodes.length; i++) {
-        var check = this.viewNodes[i];
-        if (check.owner == this) continue;
-        
-        // Get attraction of the cells - avoid larger cells, viruses and same team cells
-        var influence = 0;
-        if (check.cellType == 0) {
-            // Player cell
-            if (this.gameServer.gameMode.haveTeams && (cell.owner.team == check.owner.team)) {
-                // Same team cell
-                influence = 0;
-            }
-            else if (cell._size > check._size * 1.15) {
-                // Can eat it
-                influence = check._size * 2.5;
-            }
-            else if (check._size > cell._size * 1.15) {
-                // Can eat me
-                influence = -check._size;
-            } else {
-                influence = -(check._size / cell._size) / 3;
-            }
-        } else if (check.cellType == 1) {
-            // Food
-            influence = 1;
-        } else if (check.cellType == 2) {
-            // Virus/Mothercell
-            if (cell._size > check._size * 1.15) {
-                // Can eat it
-                if (this.cells.length == this.gameServer.config.playerMaxCells) {
-                    // Won't explode
-                    influence = check._size * 2.5;
-                } else {
-                    // Can explode
-                    influence = -1;
-                }
-            } else if (check.isMotherCell && check._size > cell._size * 1.15) {
-                // can eat me
-                influence = -1;
-            }
-        } else if (check.cellType == 3) {
-            // Ejected mass
-            if (cell._size > check._size * 1.15)
-                // can eat
-                influence = check._size;
-        }
-        
-        // Apply influence if it isn't 0 or my cell
-        if (influence == 0 || cell.owner == check.owner)
-            continue;
-        
-        // Calculate separation between cell and check
-        var displacement = new Vector(check.position.x - cell.position.x, check.position.y - cell.position.y);
-        
-        // Figure out distance between cells
-        var distance = displacement.length();
-        if (!influence) {
-            // Get edge distance
-            distance -= cell._size + check._size;
-        }
-        
-        // The farther they are the smaller influnce it is
-        if (distance < 1) distance = 1; // Avoid NaN and positive influence with negative distance & attraction
-        influence /= distance;
-        
-        // Produce force vector exerted by this entity on the cell
-        var force = displacement.normalize().scale(influence);
-        
-        // Splitting conditions
-        if (check.cellType == 0 && cell._size > check._size * 1.15
-            && !this.splitCooldown && this.cells.length < 8 && 
-            820 - cell._size / 2 - check._size >= distance) {
-            // Splitkill the target
-            this.mouse = {
-                x: check.position.x,
-                y: check.position.y
-            };
-            this.splitCooldown = 15;
-            this.socket.packetHandler.pressSpace = true;
-            return;
-        } else {
-            // Add up forces on the entity
-            result.add(force);
-        }
-    }
-    // Normalize the resulting vector
-    result.normalize();
-    // Set bot's mouse position
-    this.mouse = {
-        x: cell.position.x + result.x * 800,
-        y: cell.position.y + result.y * 800
-    };
-};

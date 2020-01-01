@@ -8,7 +8,7 @@ module.exports = {
 
 var get = function (id) {
     var mode;
-    switch (id) {
+    switch (parseInt(id)) {
         case 1: // Teams
             mode = new module.exports.Teams();
             break;

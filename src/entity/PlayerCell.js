@@ -1,41 +1,43 @@
 var Cell = require('./Cell');
+var Packet = require('../packet');
 
-function PlayerCell() {
-    Cell.apply(this, Array.prototype.slice.call(arguments));
-    
-    this.cellType = 0;
-    this._speed = null;
-    this._canRemerge = false;
-}
+class PlayerCell extends Cell {
+    constructor(server, owner, position, size) {
+        super(server, owner, position, size);
+        this.type = 0;
+        this._canRemerge = false;
+    };
+
+    canEat(cell) {
+        return true;
+    };
+
+    getSpeed(dist) {
+        let speed = 2.2 * Math.pow(this._size, -0.45) * 40;
+        speed *= this.server.config.playerSpeed;
+        speed = Math.min(dist, speed);
+        if (dist != 0) speed /= dist;
+        return speed;
+    };
+
+    onAdd(server) {
+        this.color = this.owner.color;
+        this.owner.cells.push(this);
+        this.owner.socket.packetHandler.sendPacket(new Packet.AddNode(this.owner, this));
+        this.server.nodesPlayer.unshift(this);
+        server.mode.onCellAdd(this);
+    }
+    onRemove(server) {
+        let index = this.owner.cells.indexOf(this);
+        if (index != -1)
+            this.owner.cells.splice(index, 1);
+        index = this.server.nodesPlayer.indexOf(this);
+
+        if (index != -1)
+            this.server.nodesPlayer.splice(index, 1);
+
+        server.mode.onCellRemove(this);
+    };
+};
 
 module.exports = PlayerCell;
-PlayerCell.prototype = new Cell();
-
-// Main Functions
-
-PlayerCell.prototype.canEat = function (cell) {
-    return true; // player cell can eat anyone
-};
-
-PlayerCell.prototype.getSpeed = function (dist) {
-    var speed = 2.1106 / Math.pow(this._size, 0.449);
-    var normalizedDist = Math.min(dist, 32) / 32;
-    // tickStep = 40ms
-    this._speed = speed * 40 * this.gameServer.config.playerSpeed;
-    return this._speed * normalizedDist;
-};
-
-PlayerCell.prototype.onAdd = function (gameServer) {
-    // Gamemode actions
-    gameServer.gameMode.onCellAdd(this);
-};
-
-PlayerCell.prototype.onRemove = function (gameServer) {
-    // Remove from player cell list
-    var index = this.owner.cells.indexOf(this);
-    if (index != -1) {
-        this.owner.cells.splice(index, 1);
-    }
-    // Gamemode actions
-    gameServer.gameMode.onCellRemove(this);
-};

@@ -1,21 +1,60 @@
 # Changelog
-#### 1.5.0:
-* Added more botnames, thanks to @t11tanYT, @FantasyIsBae, and @AlexandriteErikParacelsus;
-* Fixed some bugs;
-* Refactored collision and move engine again;
-* Improved performance;
-* Fixed incorrect ping count with server tracking, thanks to @MastaCoder;
-* Redid last man standing, thanks to @Tyler3D;
-* Added new command: lms;
-* Added simpler rigid collision resolution for ejected mass;
-* Tweaked a few things in PlayerTracker/GameServer;
-* Added some new messages for commands, thanks to @Agarian;
-* Added new configs: motherCellMaxMass, playerMinEjectSize, and velocity;
-* Added all skins from Agar.io to randomSkins, thanks to @ItzLevvie;
-* Removed "play" command;
-* Redid configs to match the old Agar.io configs;
-* Fixed anti-minion;
-* Changed number symbols in gameserver.ini to semicolons
+#### 1.6.2
+* Optimised food and virus cell spawning and removal model (no longer use a spawning interval).
+* Removed unused gamemodes.
+
+#### 1.6.1:
+* Cleaned a bit of CommandList, thanks to @AlexHGaming;
+* Added botnames and removed unrealistic ones, thanks to @AlexHGaming;
+* Fixed reload command;
+* Added an issue template with rules, thanks to @proxiemind;
+* Beautify leaderboard code and fixed board command, thanks to @Agarian;
+* Added support for protocol 13, thanks to @Tyler3D;
+* Added ability to separate chat for teams, thanks to @F0RIS;
+* Fix minions not always collecting pellets in pellet mode;
+* Added average score section to status command;
+* Fixed some bugs regarding physics and collision;
+* Fixed cells switching order on doublesplit, thanks to @Luka967;
+* Added reading arguments on startup, thanks to @F0RIS
+* Fixed skins on Cigar client, thanks to @Tyler3D;
+* Improved console UI, thanks to @B0RYS and @Tyler3D;
+* Tweaked the readme, thanks to @B0RYS and @MastaCoder;
+* Fixed mothercell spawning issue;
+* Edited the Wiki, thanks to @AlexHGaming, @Steve7914, @Tyler3D, @ItzLevvie, and @MastaCoder;
+* Created the MultiOgarII Wiki, thanks to @AlexHGaming;
+* Match randomskins.txt to Agar.io's skins, thanks to @ItzLevvie;
+
+-------------
+#### 1.6.0:
+* Refactored collision and move engine;
+* Formatted & simplified some code;
+* Refactored splitting cells;
+* Tweaked splitting again;
+* Fixed bug with mothercells eating viruses;
+* Fixed "kickbot" command kicking minions too;
+* Fixed playerbots not being able to have minions;
+* Reduced rate of cells switching order when doublesplitting;
+* ^^ This also fixed pushback with mobile splitting;
+* Completely fixed ejected mass dissapearing;
+* Fixed connection issues;
+* Fixed long distance popsplits;
+* Got rid of vegetable bot names;
+* Refactored BinaryWriter;
+* Refactored BinaryReader;
+* Made changes to things regarding packets, thanks to @ItzLevvie;
+* Fixed food registering as playercell, thanks to @NuclearC and @ItzLevvie;
+* Refactored QuadNode;
+* Refactored safe spawning;
+* Fixed bug with linux script;
+* Fixed error with ws module;
+* Made some edits to commands, thanks to @Agarian;
+* Implemented vector;
+* Added popsplit macro, thanks to @Tyler3D;
+* Refactored some of the scripts;
+* Fixed leaderboard positioning in FFA;
+* Added "calc" command;
+* Tweaked eject size and virus explosion multipliers;
+* Fixed server not working with uws module, thanks to @Luka967
 
 -------------
 #### 1.4.8:
@@ -34,7 +73,7 @@
 * Fixed small bug with botplayers
 
 -------------
-#### 1.4.7: 
+#### 1.4.7:
 * Added web console! All thanks to @Gimmo :)
 * Cleaned more of CommandList, also thanks to @Gimmo;
 * Fixed teleport command, thanks to @Agarian;
@@ -67,7 +106,7 @@
 * Fixed some bugs
 
 --------------
-#### 1.4.2: 
+#### 1.4.2:
 * Added "replace" command;
 * Add srcFiles variable, thanks to @MastaCoder;
 * Added ejectSpawnPercent config;
@@ -76,7 +115,7 @@
 * Greatly improved performance, now 2x better than original MultiOgar
 
 --------------
-#### 1.4.1: 
+#### 1.4.1:
 * Fixed a few bugs;
 * Added back old commands;
 * Added two new commands, cleaned up "help" command;
@@ -84,7 +123,7 @@
 * Improved splitting and collision
 
 --------------
-#### 1.4.0: 
+#### 1.4.0:
 * Added pellet mode for minions! thanks to @ZfsrGhS953;
 * Cleaned/refactored the rest of GameServer;
 * Improved performance;
@@ -105,7 +144,7 @@
 * Removed unnecessary commands aswell as functions for said commands
 
 --------------
-#### 1.3.5: 
+#### 1.3.5:
 * Added new gamemode: Last Man Standing! Thanks to @Tyler3D;
 * Added new minion features;
 * Got rid of some more unnecessary gamemodes/commands;
@@ -144,5 +183,48 @@
 
 --------------
 #### 1.2.47:
-* Improved stability and performance; 
+* Improved stability and performance;
 * Added mute/unmute command
+
+--------------
+#### What's new from Ogar:
+* Added support for secure websocket connections (TLS);
+* Fixed mass decay;
+* Added ejectSizeLoss;
+* Added sub-net ban feature (use `ban xx.xx.xx.*` or `ban xx.xx.*.*` to ban entire sub-network);
+* Added performance optimizations, now up to 700 bots with no lags at all;
+* Fixed bug when some cell split/eject were shown with delay for some clients;
+* Added a lot of protocol optimizations, now server works with no lags at all even with 64 connected players;
+* Added server version, now you can check if your MultiOgar code is fresh;
+* Significant performance improvement and more smooth physics;
+* Added protocol optimizations to reduce lags on cell multi split;
+* Fixed pop-split behavior;
+* Fixed cell-split order, now split-run works ok;
+* A little performance improvement for split/eject;
+* Fixed min mass to split/eject;
+* Fixed mass-limit behavior;
+* Added chat player commands /skin and /kill (to change skin, just type /skin %shark in the chat);
+* Added scramble level 3 (anti-bot/anti-minimap protection), unsupported on some clients (unfortunately include vanilla, ogar.mivabe.nl works ok);
+* Massive perfromance improvement & reduce network traffic;
+* Split behavior - fixed;
+* Protocol code - optimized;
+* Massive performance improvement with quad-tree lookup;
+* Split/Eject - physics code rewritten;
+* Player speed - physics code rewritten;
+* Cell remerge - physics code rewritten;
+* Cell collision - physics code rewritten;
+* View area - code rewritten;
+* Spectate - code rewritten;
+* Mouse control and cell movements - physics code rewritten;
+* Border calculations - rewritten;
+* Border bouncy physics - fixed and improved;
+* mainLoop - cleaned;
+* Added support for different protocols (4, early 5, late 5, 6, 7, 8);
+* Added automatic mouse message type recognition;
+* Added chat support;
+* Added anti-spam protection;
+* Added skin support (use name "< shark > Fish", remove space);
+* Color generator replaced with hsv model;
+* Memory leaks - fixed;
+* Performance improved and optimized;
+* Added support for server tracker ogar.mivabe.nl/master
